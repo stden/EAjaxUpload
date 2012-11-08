@@ -6,6 +6,7 @@ class qqUploadedFileXhr
 {
     /**
      * Save the file to the specified path
+     * @param $path
      * @return boolean TRUE on success
      */
     function save($path)
@@ -58,14 +59,12 @@ class qqUploadedFileForm
 {
     /**
      * Save the file to the specified path
+     * @param $path
      * @return boolean TRUE on success
      */
     function save($path)
     {
-        if (!move_uploaded_file($_FILES['qqfile']['tmp_name'], $path)) {
-            return false;
-        }
-        return true;
+        assert(move_uploaded_file($_FILES['qqfile']['tmp_name'], $path));
     }
 
     function getName()
@@ -141,7 +140,8 @@ class qqFileUploader
     /**
      * Returns array('success'=>true) or array('error'=>'error message')
      * @param $uploadDirectory
-     * @param string $newFileName Имя файла
+     * @param $newFileId
+     * @internal param string $newFileName Имя файла
      * @return array
      */
     function handleUpload($uploadDirectory, $newFileId)
@@ -151,11 +151,11 @@ class qqFileUploader
             throw new Exception('Здесь обязательно должен быть int - id картинки');
 
         if (!is_writable($uploadDirectory)) {
-            return array('error' => "Server error. Upload directory isn't writable.");
+            throw new Exception("Server error. Upload directory \"$uploadDirectory\" isn't writable.");
         }
 
         if (!$this->file) {
-            return array('error' => 'No files were uploaded.');
+            throw new Exception('No files were uploaded.');
         }
 
         $size = $this->file->getSize();
@@ -178,8 +178,11 @@ class qqFileUploader
 
         // Генерируем новое имя файла на основании ID
         $newFileName = $uploadDirectory . $newFileId . '.' . $ext;
+        assert(!empty($newFileName));
 
         if ($this->file->save($newFileName)) {
+            $fn = $this->file->getName();
+            assert(!empty($fn));
             return
                 array(
                     'success' => true,
@@ -188,8 +191,7 @@ class qqFileUploader
                     'content_type' => $this->file->getContentType(),
                 );
         } else {
-            return array('error' => 'Could not save uploaded file.' .
-                'The upload was cancelled, or server error encountered');
+            throw new Exception('Could not save uploaded file. The upload was cancelled, or server error encountered');
         }
 
     }
