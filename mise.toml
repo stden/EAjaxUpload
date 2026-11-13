@@ -1,0 +1,5 @@
+[tools]
+node = "24.22.2"
+
+[tasks.check]
+run = "git diff --check"
